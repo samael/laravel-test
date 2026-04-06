@@ -9,6 +9,14 @@ This project is a Laravel-based ticket management system with:
 - RBAC via Spatie Permission
 - Docker-based local environment
 
+## CI Result
+
+- Workflow: `CI` (GitHub Actions)
+- Current result: PASSING
+- Latest local verification: `13 passed (75 assertions)`
+
+CI runs automatically on `push` and `pull_request` for `main`, `master`, and `develop` branches.
+
 ## Run Locally with Docker
 
 This project includes a Docker setup for local development.
