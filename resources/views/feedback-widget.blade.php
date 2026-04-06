@@ -140,6 +140,11 @@
             border: 1px solid var(--danger-line);
         }
 
+        .notice ul {
+            margin: 8px 0 0;
+            padding-left: 18px;
+        }
+
         form {
             display: grid;
             gap: 12px;
@@ -180,6 +185,12 @@
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(47, 111, 79, 0.16);
+        }
+
+        input.input-error,
+        textarea.input-error {
+            border-color: #d4623b;
+            box-shadow: 0 0 0 3px rgba(212, 98, 59, 0.15);
         }
 
         button {
@@ -246,8 +257,8 @@
     </section>
 
     <section class="content">
-        <div id="feedback-success" class="notice ok" style="display:none"></div>
-        <div id="feedback-error" class="notice err" style="display:none"></div>
+        <div id="feedback-success" class="notice ok" role="status" aria-live="polite" style="display:none"></div>
+        <div id="feedback-error" class="notice err" role="alert" aria-live="assertive" style="display:none"></div>
 
         <form id="feedback-form" method="POST" action="{{ route('api.v1.tickets.store') }}">
 
@@ -308,6 +319,7 @@
         const submitButton = document.getElementById('feedback-submit');
         const successBox = document.getElementById('feedback-success');
         const errorBox = document.getElementById('feedback-error');
+        const fieldNames = ['name', 'phone', 'email', 'topic', 'body'];
 
         if (!form) {
             return;
@@ -318,6 +330,12 @@
             successBox.textContent = '';
             errorBox.style.display = 'none';
             errorBox.innerHTML = '';
+
+            fieldNames.forEach(function (fieldName) {
+                if (form[fieldName]) {
+                    form[fieldName].classList.remove('input-error');
+                }
+            });
         }
 
         function showSuccess(message) {
@@ -326,20 +344,27 @@
             postWidgetHeight();
         }
 
-        function showErrors(errors) {
+        function showErrors(errors, message) {
             if (!errors || Object.keys(errors).length === 0) {
-                errorBox.innerHTML = '<strong>Submission failed. Please try again.</strong>';
+                errorBox.innerHTML = `<strong>${message || 'Submission failed. Please try again.'}</strong>`;
                 errorBox.style.display = 'block';
                 postWidgetHeight();
                 return;
             }
+
+            Object.keys(errors).forEach(function (fieldName) {
+                if (form[fieldName]) {
+                    form[fieldName].classList.add('input-error');
+                }
+            });
 
             const listItems = Object.values(errors)
                 .flat()
                 .map((message) => `<li>${message}</li>`)
                 .join('');
 
-            errorBox.innerHTML = `<strong>Check the entered data:</strong><ul>${listItems}</ul>`;
+            const title = message || 'Check the entered data:';
+            errorBox.innerHTML = `<strong>${title}</strong><ul>${listItems}</ul>`;
             errorBox.style.display = 'block';
             postWidgetHeight();
         }
@@ -369,17 +394,22 @@
                     body: JSON.stringify(payload),
                 });
 
-                const result = await response.json();
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    result = {};
+                }
 
                 if (!response.ok) {
-                    showErrors(result.errors ?? null);
+                    showErrors(result.errors ?? null, result.message ?? null);
                     return;
                 }
 
                 showSuccess(result.message ?? 'Request sent successfully.');
                 form.reset();
             } catch (error) {
-                showErrors(null);
+                showErrors(null, 'Network error. Please try again.');
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Submit Request';
