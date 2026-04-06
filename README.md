@@ -53,6 +53,7 @@ docker compose exec app php artisan migrate --seed
 
 - App: http://localhost:8000
 - MySQL exposed port: `33060`
+- Swagger API docs: http://localhost:8000/api/docs
 
 ### Useful commands
 

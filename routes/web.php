@@ -11,6 +11,9 @@ Route::get('/', function () {
 Route::get('/feedback-widget', [FeedbackWidgetController::class, 'index'])
     ->name('feedback-widget.index');
 
+Route::view('/api/docs', 'api-docs')
+    ->name('api.docs');
+
 Route::prefix('admin')
     ->middleware('role:manager,admin')
     ->name('admin.')
