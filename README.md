@@ -1,5 +1,7 @@
 # Ticket Management Project
 
+[![CI](https://github.com/samael/laravel-test/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/samael/laravel-test/actions/workflows/ci.yml?query=branch%3Amain)
+
 This project is a Laravel-based ticket management system with:
 
 - Feedback widget submission flow (AJAX + API)
