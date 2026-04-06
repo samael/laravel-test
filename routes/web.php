@@ -5,7 +5,7 @@ use App\Http\Controllers\FeedbackWidgetController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('feedback-widget.index');
 });
 
 Route::get('/feedback-widget', [FeedbackWidgetController::class, 'index'])
