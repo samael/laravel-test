@@ -246,23 +246,10 @@
     </section>
 
     <section class="content">
-        @if (session('success'))
-            <div class="notice ok">{{ session('success') }}</div>
-        @endif
+        <div id="feedback-success" class="notice ok" style="display:none"></div>
+        <div id="feedback-error" class="notice err" style="display:none"></div>
 
-        @if ($errors->any())
-            <div class="notice err">
-                <strong>Check the entered data:</strong>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('feedback-widget.store') }}">
-            @csrf
+        <form id="feedback-form" method="POST" action="{{ route('api.v1.tickets.store') }}">
 
             <div class="row">
                 <div>
@@ -290,7 +277,7 @@
                 <textarea id="body" name="body" required>{{ old('body') }}</textarea>
             </div>
 
-            <button type="submit">Submit Request</button>
+            <button id="feedback-submit" type="submit">Submit Request</button>
         </form>
     </section>
 </main>
@@ -316,6 +303,88 @@
         }
 
         postWidgetHeight();
+
+        const form = document.getElementById('feedback-form');
+        const submitButton = document.getElementById('feedback-submit');
+        const successBox = document.getElementById('feedback-success');
+        const errorBox = document.getElementById('feedback-error');
+
+        if (!form) {
+            return;
+        }
+
+        function clearNotices() {
+            successBox.style.display = 'none';
+            successBox.textContent = '';
+            errorBox.style.display = 'none';
+            errorBox.innerHTML = '';
+        }
+
+        function showSuccess(message) {
+            successBox.textContent = message;
+            successBox.style.display = 'block';
+            postWidgetHeight();
+        }
+
+        function showErrors(errors) {
+            if (!errors || Object.keys(errors).length === 0) {
+                errorBox.innerHTML = '<strong>Submission failed. Please try again.</strong>';
+                errorBox.style.display = 'block';
+                postWidgetHeight();
+                return;
+            }
+
+            const listItems = Object.values(errors)
+                .flat()
+                .map((message) => `<li>${message}</li>`)
+                .join('');
+
+            errorBox.innerHTML = `<strong>Check the entered data:</strong><ul>${listItems}</ul>`;
+            errorBox.style.display = 'block';
+            postWidgetHeight();
+        }
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            clearNotices();
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Sending...';
+
+            try {
+                const payload = {
+                    name: form.name.value,
+                    phone: form.phone.value,
+                    email: form.email.value,
+                    topic: form.topic.value,
+                    body: form.body.value,
+                };
+
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    showErrors(result.errors ?? null);
+                    return;
+                }
+
+                showSuccess(result.message ?? 'Request sent successfully.');
+                form.reset();
+            } catch (error) {
+                showErrors(null);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Request';
+            }
+        });
     })();
 </script>
 </body>
