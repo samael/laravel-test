@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Models\Customer;
+use App\Models\Ticket;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -61,5 +62,55 @@ class TicketStoreTest extends TestCase
         $response
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['name', 'phone', 'email', 'topic', 'body']);
+    }
+
+    public function test_it_blocks_second_ticket_for_same_email(): void
+    {
+        $customer = Customer::factory()->create([
+            'email' => 'john@example.com',
+            'phone' => '+380991112233',
+        ]);
+
+        Ticket::factory()->create([
+            'client_id' => $customer->id,
+            'status' => 'new',
+        ]);
+
+        $response = $this->postJson('/api/v1/tickets', [
+            'name' => 'John Doe',
+            'phone' => '+380000000001',
+            'email' => 'john@example.com',
+            'topic' => 'Duplicate email ticket',
+            'body' => 'Should fail because email is already used for a ticket.',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_it_blocks_second_ticket_for_same_phone(): void
+    {
+        $customer = Customer::factory()->create([
+            'email' => 'john@example.com',
+            'phone' => '+380991112233',
+        ]);
+
+        Ticket::factory()->create([
+            'client_id' => $customer->id,
+            'status' => 'new',
+        ]);
+
+        $response = $this->postJson('/api/v1/tickets', [
+            'name' => 'John Doe',
+            'phone' => '+380991112233',
+            'email' => 'other@example.com',
+            'topic' => 'Duplicate phone ticket',
+            'body' => 'Should fail because phone is already used for a ticket.',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['phone']);
     }
 }

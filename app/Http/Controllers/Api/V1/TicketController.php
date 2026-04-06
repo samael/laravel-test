@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Ticket;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class TicketController extends Controller
 {
@@ -24,6 +25,32 @@ class TicketController extends Controller
             'topic' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:3000'],
         ]);
+
+        $emailAlreadyUsed = Ticket::query()
+            ->whereHas('client', function ($query) use ($validated): void {
+                $query->where('email', $validated['email']);
+            })
+            ->exists();
+
+        $phoneAlreadyUsed = Ticket::query()
+            ->whereHas('client', function ($query) use ($validated): void {
+                $query->where('phone', $validated['phone']);
+            })
+            ->exists();
+
+        if ($emailAlreadyUsed || $phoneAlreadyUsed) {
+            $errors = [];
+
+            if ($emailAlreadyUsed) {
+                $errors['email'] = ['Only one ticket is allowed per email.'];
+            }
+
+            if ($phoneAlreadyUsed) {
+                $errors['phone'] = ['Only one ticket is allowed per phone.'];
+            }
+
+            throw ValidationException::withMessages($errors);
+        }
 
         $customer = Customer::query()->firstOrCreate(
             ['email' => $validated['email']],
