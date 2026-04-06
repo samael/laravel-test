@@ -6,16 +6,23 @@ use App\Models\Customer;
 use App\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Http\Response;
 
 class FeedbackWidgetController extends Controller
 {
     /**
      * Show feedback widget page.
      */
-    public function index(): View
+    public function index(Request $request): Response
     {
-        return view('feedback-widget');
+        $frameAncestors = env('FEEDBACK_WIDGET_FRAME_ANCESTORS', '*');
+
+        return response()
+            ->view('feedback-widget', [
+                'embedded' => $request->boolean('embedded', true),
+            ])
+            ->header('Content-Security-Policy', "frame-ancestors {$frameAncestors}")
+            ->header('X-Frame-Options', 'ALLOWALL');
     }
 
     /**

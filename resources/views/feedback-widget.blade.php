@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="uk" class="{{ $embedded ? 'is-embedded' : '' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,9 +24,14 @@
             box-sizing: border-box;
         }
 
+        html,
+        body {
+            width: 100%;
+        }
+
         body {
             margin: 0;
-            min-height: 100vh;
+            min-height: 100%;
             font-family: "Trebuchet MS", "Segoe UI", sans-serif;
             color: var(--ink);
             background: radial-gradient(circle at 15% 20%, #ffffff 0%, transparent 40%),
@@ -35,6 +40,12 @@
             display: grid;
             place-items: center;
             padding: 24px;
+        }
+
+        .is-embedded body {
+            min-height: 0;
+            padding: 8px;
+            background: transparent;
         }
 
         .widget {
@@ -47,6 +58,11 @@
             overflow: hidden;
             box-shadow: 0 24px 50px rgba(28, 51, 35, 0.18);
             animation: rise 480ms ease-out;
+        }
+
+        .is-embedded .widget {
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(28, 51, 35, 0.12);
         }
 
         .side {
@@ -206,6 +222,16 @@
             .row {
                 grid-template-columns: 1fr;
             }
+
+            .is-embedded body {
+                padding: 0;
+            }
+
+            .is-embedded .widget {
+                border-radius: 0;
+                border-left: 0;
+                border-right: 0;
+            }
         }
     </style>
 </head>
@@ -268,5 +294,29 @@
         </form>
     </section>
 </main>
+<script>
+    (function () {
+        function postWidgetHeight() {
+            if (window.parent === window) {
+                return;
+            }
+
+            window.parent.postMessage({
+                type: 'feedback-widget:resize',
+                height: document.documentElement.scrollHeight
+            }, '*');
+        }
+
+        window.addEventListener('load', postWidgetHeight);
+        window.addEventListener('resize', postWidgetHeight);
+
+        if (window.ResizeObserver) {
+            const resizeObserver = new ResizeObserver(postWidgetHeight);
+            resizeObserver.observe(document.body);
+        }
+
+        postWidgetHeight();
+    })();
+</script>
 </body>
 </html>
