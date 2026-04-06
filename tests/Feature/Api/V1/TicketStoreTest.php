@@ -24,8 +24,20 @@ class TicketStoreTest extends TestCase
             ->assertCreated()
             ->assertJsonStructure([
                 'message',
-                'data' => ['ticket_id', 'status', 'customer_id'],
+                'data' => [
+                    'id',
+                    'topic',
+                    'body',
+                    'status',
+                    'date_at',
+                    'customer' => ['id', 'name', 'phone', 'email'],
+                    'created_at',
+                    'updated_at',
+                ],
             ]);
+
+        $response->assertJsonPath('data.status', 'new');
+        $response->assertJsonPath('data.customer.email', 'john@example.com');
 
         $this->assertDatabaseHas('customers', [
             'email' => 'john@example.com',

@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Database\Factories\TicketFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -108,5 +110,32 @@ class Ticket extends Model implements HasMedia
     public static function maxFileSize(): int
     {
         return 1024 * 1024 * 10; // 10MB
+    }
+
+    /**
+     * Filter tickets by statistics period.
+     */
+    public function scopeForStatisticsPeriod(Builder $query, string $period): Builder
+    {
+        [$from, $to] = self::statisticsPeriodBounds($period);
+
+        return $query->whereBetween('date_at', [$from, $to]);
+    }
+
+    /**
+     * Get period boundaries used in statistics.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    public static function statisticsPeriodBounds(string $period): array
+    {
+        $now = Carbon::now();
+
+        return match ($period) {
+            'day' => [$now->copy()->startOfDay(), $now->copy()->endOfDay()],
+            'week' => [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()],
+            'month' => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()],
+            default => [$now->copy()->startOfDay(), $now->copy()->endOfDay()],
+        };
     }
 }

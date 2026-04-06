@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\V1\TicketResource;
+use App\Http\Resources\V1\TicketStatisticsResource;
 use App\Models\Customer;
 use App\Models\Ticket;
 use Illuminate\Http\JsonResponse;
@@ -46,13 +48,44 @@ class TicketController extends Controller
             'date_at' => now(),
         ]);
 
-        return response()->json([
-            'message' => 'Thank you! Your request has been sent. We will contact you soon.',
-            'data' => [
-                'ticket_id' => $ticket->id,
-                'status' => $ticket->status,
-                'customer_id' => $customer->id,
+        return (new TicketResource($ticket->load('client')))
+            ->additional([
+                'message' => 'Thank you! Your request has been sent. We will contact you soon.',
+            ])
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    /**
+     * Get ticket statistics by period.
+     */
+    public function statistics(Request $request): TicketStatisticsResource
+    {
+        $validated = $request->validate([
+            'period' => ['nullable', 'in:day,week,month'],
+        ]);
+
+        $period = $validated['period'] ?? 'day';
+        [$from, $to] = Ticket::statisticsPeriodBounds($period);
+
+        $query = Ticket::query()->forStatisticsPeriod($period);
+        $total = (clone $query)->count();
+
+        $statusCounts = (clone $query)
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        return new TicketStatisticsResource([
+            'period' => $period,
+            'from' => $from,
+            'to' => $to,
+            'total' => $total,
+            'by_status' => [
+                'new' => (int) ($statusCounts['new'] ?? 0),
+                'at work' => (int) ($statusCounts['at work'] ?? 0),
+                'processed' => (int) ($statusCounts['processed'] ?? 0),
             ],
-        ], 201);
+        ]);
     }
 }
