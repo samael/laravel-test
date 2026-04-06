@@ -29,6 +29,44 @@ In addition, [Laracasts](https://laracasts.com) contains thousands of video tuto
 
 You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
 
+## Run Locally with Docker
+
+This project includes a Docker setup for local development.
+
+### Requirements
+
+- Docker Desktop (or Docker Engine + Docker Compose)
+
+### Start the application
+
+```bash
+docker compose up -d --build
+```
+
+### Run initial migrations and seeders
+
+```bash
+docker compose exec app php artisan migrate --seed
+```
+
+### Open in browser
+
+- App: http://localhost:8000
+- MySQL exposed port: `33060`
+
+### Useful commands
+
+```bash
+# Stop containers
+docker compose down
+
+# Stop and remove DB volume (full reset)
+docker compose down -v
+
+# Run tests
+docker compose exec app php artisan test
+```
+
 ## Agentic Development
 
 Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
